@@ -1,0 +1,7 @@
+web_addr: 0.0.0.0:4040
+authtoken: 24Y989Io1N6N0YRqV0ghovx4B66_4PesjGdRTEGZ92Z1vVJf7
+version: 2
+tunnels:
+  linebot:
+    addr: linebot:8080
+    proto: http

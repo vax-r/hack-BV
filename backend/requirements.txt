@@ -1,0 +1,5 @@
+Flask==2.3.3
+numpy==1.26.0
+pandas==2.1.1
+jsonify==0.5
+request3==2.19.0
