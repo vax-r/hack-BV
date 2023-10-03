@@ -29,11 +29,11 @@ def list():
     elif len(request.args) == 0:
         # if no specify video name, then return all the files
         response = requests.get(url, headers=headers, params=querystring)
-        return response.json()
+        return response.json(), 200
     
     querystring["filter.name"] = request.args["video_name"] # query the requested video_name
     response = requests.get(url, headers=headers, params=querystring)
-    return response.json()
+    return response.json(), 200
 
 # search for specific file
 @file_bp.route('/search/<video_name>', methods=['GET'])
@@ -49,4 +49,4 @@ def search(video_name):
 
     response = requests.get(search_url, headers=headers)
 
-    return response.json()
+    return response.json(), 200
