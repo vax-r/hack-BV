@@ -1,12 +1,17 @@
 from flask import Blueprint, request, jsonify
 import requests
 import json
+import os
+import hashlib
+import base64
 
 # circular import needs future improvements
 from config import base_url, api_token, org_id
 
 # Create a Blueprint object
 file_bp = Blueprint('file', __name__)
+
+UPLOAD_FOLDER = "/backend/code/assets"
 
 headers = {
     "x-bv-org-id": org_id,
@@ -50,3 +55,90 @@ def search(video_name):
     response = requests.get(search_url, headers=headers)
 
     return response.json(), 200
+
+def sha1_digest(video_file_path):
+    sha1 = hashlib.sha1()
+    with open(video_file_path, 'rb') as file:
+        while True:
+            data = file.read(65536)  # Read the file in 64KB chunks
+            if not data:
+                break
+            sha1.update(data)
+
+    sha1_hash = sha1.digest()
+    base64_encoded_hash = base64.b64encode(sha1_hash).decode('utf-8')
+    return base64_encoded_hash
+
+
+# upload file
+@file_bp.route('/upload', methods=['POST'])
+def upload():
+    if 'file' not in request.files:
+        return jsonify({
+            "code":"2",
+            "message":"No file part",
+        }), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({
+            "code":"3",
+            "message":"No selected file",
+        }), 400
+    
+    file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    file.save(file_path) # store file in local
+
+    # generate request for upload file
+    url = base_url + "/bv/cms/v1/library/files:upload"
+
+    payload = { "file": {
+        "name": file.filename,
+        "size": str(os.stat(file_path).st_size),
+        "source": "FILE_SOURCE_UPLOAD_IN_LIBRARY",
+        "type": "FILE_TYPE_VIDEO"
+    } }
+
+    response = requests.post(url, json=payload, headers=headers) # response of upload API
+
+    fid = response.json()['file']['id']
+    upload_id = response.json()['upload_data']['id']
+
+    # generate checksum_sha1
+    checksum_sha1 = sha1_digest(file_path)
+
+    # generate body for complete upload
+    parts = response.json()['upload_data']['parts']
+    all_res = []
+    i = 1
+    for part in parts:
+        with open(file_path, 'rb') as f:
+            part_res = requests.put(part['presigned_url'], data=f)
+            all_res.append({
+                "etag": part_res.headers['ETag'],
+                "part_number": i
+            })
+        i += 1
+
+    # complete file upload url
+    complete_url = base_url + "/bv/cms/v1/library/files/" + fid + ":complete-upload"
+    payload = { "complete_data": {
+        "checksum_sha1": checksum_sha1,
+        "id": upload_id,
+        "parts": all_res,
+    } }
+
+    response = requests.post(complete_url, json=payload, headers=headers)
+    # print(response.json())
+    if response.status_code != 200:
+        return jsonify({
+            "code":"400",
+            "message":"file upload error",
+            "message_from_BV":response.json(),
+        }), response.status_code
+    
+    return jsonify({
+        "code":"200",
+        "message":"file upload successfully",
+        "message_from_BV":response.json(),
+    })
