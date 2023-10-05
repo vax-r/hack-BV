@@ -3,7 +3,6 @@
 from flask import Blueprint
 import requests
 
-# circular import needs future improvements
 from config import base_url, api_token, org_id
 
 # Create a Blueprint object

@@ -5,7 +5,6 @@ import os
 import hashlib
 import base64
 
-# circular import needs future improvements
 from config import base_url, api_token, org_id
 
 # Create a Blueprint object
@@ -55,6 +54,13 @@ def search(video_name):
     response = requests.get(search_url, headers=headers)
 
     return response.json(), 200
+
+def get_file_id(video_name):
+    url = base_url + "/bv/cms/v1/library/files"
+    querystring = {"current_page":"1","items_per_page":"1","type":"FILE_TYPE_VIDEO","filter.name":video_name}
+
+    response = requests.get(url, headers=headers, params=querystring)
+    return response.json()['files'][0]['id']
 
 def sha1_digest(video_file_path):
     sha1 = hashlib.sha1()
