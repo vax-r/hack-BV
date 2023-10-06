@@ -86,4 +86,15 @@ def create():
 
     response = requests.post(url, json=payload, headers=headers)
 
-    return response.json()
+    if response.status_code != 200:
+        return jsonify({
+            "code":"5",
+            "message":"error when creating VOD",
+            "message_from_BV":response.json(),
+        }), 400
+
+    return jsonify({
+        "code":"0",
+        "message":"VOD created successfully",
+        "message_from_BV":response.json()
+    }), 200

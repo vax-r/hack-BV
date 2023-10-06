@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, redirect, url_for
 import requests
 import json
 import os
@@ -85,6 +85,9 @@ def upload():
             "message":"No file part",
         }), 400
     
+    # TODO : require filename checking
+    # Write your code here
+
     file = request.files['file']
     if file.filename == '':
         return jsonify({
@@ -142,7 +145,13 @@ def upload():
             "message":"file upload error",
             "message_from_BV":response.json(),
         }), response.status_code
-    
+
+    # create VOD for the file
+    response = redirect(url_for('vod.create', video_name = file.filename))
+
+    if response.status_code != 200:
+        return response
+
     return jsonify({
         "code":"200",
         "message":"file upload successfully",

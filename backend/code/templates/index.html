@@ -14,7 +14,7 @@
 <body>
     <!-- Bootstrap Navbar -->
     <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <a class="navbar-brand" href="#">VOD Upload</a>
+        <a class="navbar-brand" href="#">VOD</a>
         <a class="navbar-brand" href="#">Livestream</a>
     </nav>
 
@@ -26,7 +26,7 @@
                         <h1 class="text-center">Upload Video</h1>
                     </div>
                     <div class="card-body">
-                        <form method="POST" action="/upload" enctype="multipart/form-data">
+                        <form method="POST" action="/file/upload" enctype="multipart/form-data">
                             <div class="form-group">
                                 <label for="file">Choose a video file:</label>
                                 <input type="file" class="form-control-file" name="file" id="file" accept=".mp4, .avi, .mov, .mkv">
