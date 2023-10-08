@@ -9,9 +9,9 @@ services:
     container_name: backend
     restart: unless-stopped
     ports:
-      - '8090:5000'
-    volumes:
-      - ./backend:/backend
+      - '8090:5000docke'
+    volumes:  
+      - ./backend:/backend #左邊電腦 右container(volumes)同步更改
     networks:
       - BV-networks
 
