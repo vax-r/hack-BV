@@ -3,5 +3,5 @@ authtoken: 24Y989Io1N6N0YRqV0ghovx4B66_4PesjGdRTEGZ92Z1vVJf7
 version: 2
 tunnels:
   linebot:
-    addr: linebot:8080
+    addr: linebot:8080 #container名稱的8080port
     proto: http
