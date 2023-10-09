@@ -4,6 +4,7 @@ import json
 import os
 import hashlib
 import base64
+import subprocess
 
 from config import base_url, api_token, org_id
 
@@ -11,6 +12,7 @@ from config import base_url, api_token, org_id
 file_bp = Blueprint('file', __name__)
 
 UPLOAD_FOLDER = "/backend/code/assets"
+SRT_FOLDER = "/backend/code/subtitled"
 
 headers = {
     "x-bv-org-id": org_id,
@@ -62,9 +64,16 @@ def get_file_id(video_name):
     response = requests.get(url, headers=headers, params=querystring)
     return response.json()['files'][0]['id']
 
-def sha1_digest(video_file_path):
+def get_srt_id(srt_name):
+    url = base_url + "/bv/cms/v1/library/files"
+    querystring = {"current_page":"1","items_per_page":"1","type":"FILE_TYPE_SUBTITLE","filter.name":srt_name}
+
+    response = requests.get(url, headers=headers, params=querystring)
+    return response.json()['files'][0]['id']
+
+def sha1_digest(file_path):
     sha1 = hashlib.sha1()
-    with open(video_file_path, 'rb') as file:
+    with open(file_path, 'rb') as file:
         while True:
             data = file.read(65536)  # Read the file in 64KB chunks
             if not data:
@@ -75,6 +84,91 @@ def sha1_digest(video_file_path):
     base64_encoded_hash = base64.b64encode(sha1_hash).decode('utf-8')
     return base64_encoded_hash
 
+
+# This function can generate subtitle srt file of input file
+def generate_subtitle(video_path):
+    url = "http://whisper-api:9000/asr"
+    params = {"task":"transcribe", "output":"srt"}
+
+    video_file = open(video_path, 'rb')
+    body = {"audio_file":video_file}
+    response = requests.post(url, params=params, files=body)
+    video_file.close()
+
+    if response.status_code != 200:
+        return "Failed to transcribe video"
+    
+    srt_path = "/backend/code/subtitled/" + os.path.basename(video_path).rsplit(".")[0] + ".srt"
+    with open(srt_path, 'w', encoding='utf-8') as srt_file:
+        srt_file.write(response.content.decode('utf-8'))
+
+    subtitle_video = "/backend/code/assets/" + os.path.basename(video_path).rsplit(".")[0] + "_sub.mp4"
+
+    ffmpeg_command = f"ffmpeg -i {video_path} -vf subtitles='{srt_path}' -c:a copy {subtitle_video}"
+
+    try:
+        # Run the FFmpeg command
+        subprocess.run(ffmpeg_command, check=True, shell=True)
+        return subtitle_video
+    except subprocess.CalledProcessError as e:
+        print(f"Error adding subtitles: {e}")
+    return subtitle_video
+
+# This function implements the part to upload files to BV library
+def file_upload(file_path):
+    upload_url = base_url + "/bv/cms/v1/library/files:upload"
+
+    file_type = "FILE_TYPE_VIDEO"
+    file_extension = os.path.splitext(file_path)[1].lstrip(".")
+    if file_extension == "srt":
+        file_type = "FILE_TYPE_SUBTITLE"
+
+    payload = { "file": {
+        "name": os.path.basename(file_path),
+        "size": str(os.stat(file_path).st_size),
+        "source": "FILE_SOURCE_UPLOAD_IN_LIBRARY",
+        "type": file_type
+    } }
+
+    upload_response = requests.post(upload_url, json=payload, headers=headers)
+    return upload_response
+
+# This function implements the complete signal to send when finish file uploading
+def upload_complete(upload_res, srt):
+    fid = upload_res.json()['file']['id']
+    upload_id = upload_res.json()['upload_data']['id']    
+
+    folder = UPLOAD_FOLDER
+    if srt == True:
+        folder = SRT_FOLDER
+
+    # generate checksum_sha1
+    checksum_sha1 = sha1_digest(folder + "/" + upload_res.json()['file']['name'])
+
+    # generate body for complete upload
+    parts = upload_res.json()['upload_data']['parts']
+    all_res = []
+    i = 1
+    for part in parts:
+        with open(folder + "/" + upload_res.json()['file']['name'], 'rb') as f:
+            part_res = requests.put(part['presigned_url'], data=f)
+            all_res.append({
+                "etag": part_res.headers['ETag'],
+                "part_number": i
+            })
+        i += 1
+    
+    # complete file upload url
+    complete_url = base_url + "/bv/cms/v1/library/files/" + fid + ":complete-upload"
+
+    payload = { "complete_data": {
+        "checksum_sha1": checksum_sha1,
+        "id": upload_id,
+        "parts": all_res,
+    } }
+
+    response = requests.post(complete_url, json=payload, headers=headers)
+    return response
 
 # upload file
 @file_bp.route('/upload', methods=['POST'])
@@ -96,64 +190,28 @@ def upload():
         }), 400
     
     file_path = os.path.join(UPLOAD_FOLDER, file.filename)
+    filename = file.filename
     file.save(file_path) # store file in local
 
-    # generate request for upload file
-    url = base_url + "/bv/cms/v1/library/files:upload"
+    if request.values.get('subtitle') == "1":
+        file_path = generate_subtitle(file_path)
+        filename = os.path.basename(file_path)
 
-    payload = { "file": {
-        "name": file.filename,
-        "size": str(os.stat(file_path).st_size),
-        "source": "FILE_SOURCE_UPLOAD_IN_LIBRARY",
-        "type": "FILE_TYPE_VIDEO"
-    } }
-
-    response = requests.post(url, json=payload, headers=headers) # response of upload API
-
-    fid = response.json()['file']['id']
-    upload_id = response.json()['upload_data']['id']
-
-    # generate checksum_sha1
-    checksum_sha1 = sha1_digest(file_path)
-
-    # generate body for complete upload
-    parts = response.json()['upload_data']['parts']
-    all_res = []
-    i = 1
-    for part in parts:
-        with open(file_path, 'rb') as f:
-            part_res = requests.put(part['presigned_url'], data=f)
-            all_res.append({
-                "etag": part_res.headers['ETag'],
-                "part_number": i
-            })
-        i += 1
-
-    # complete file upload url
-    complete_url = base_url + "/bv/cms/v1/library/files/" + fid + ":complete-upload"
-    payload = { "complete_data": {
-        "checksum_sha1": checksum_sha1,
-        "id": upload_id,
-        "parts": all_res,
-    } }
-
-    response = requests.post(complete_url, json=payload, headers=headers)
-    # print(response.json())
-    if response.status_code != 200:
+    upload_res = file_upload(file_path)
+    if upload_res.status_code != 200:
         return jsonify({
-            "code":"400",
-            "message":"file upload error",
-            "message_from_BV":response.json(),
-        }), response.status_code
+            "code":"2",
+            "message":"Error when uploading file",
+            "path":file_path,
+            "message_BV":upload_res.json()
+        }), 400
+
+    complete_res = upload_complete(upload_res, False)
+    if complete_res.status_code != 200:
+        return jsonify({
+            "code":"3",
+            "message":"Error when completing upload"
+        }), 400
 
     # create VOD for the file
-    response = redirect(url_for('vod.create', video_name = file.filename))
-
-    if response.status_code != 200:
-        return response
-
-    return jsonify({
-        "code":"200",
-        "message":"file upload successfully",
-        "message_from_BV":response.json(),
-    })
+    return redirect(url_for('vod.create', video_name = filename))
