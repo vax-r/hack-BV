@@ -136,7 +136,7 @@ def file_upload(file_path):
 # This function implements the complete signal to send when finish file uploading
 def upload_complete(upload_res, srt):
     fid = upload_res.json()['file']['id']
-    upload_id = upload_res.json()['upload_data']['id']    
+    upload_id = upload_res.json()['upload_data']['id']
 
     folder = UPLOAD_FOLDER
     if srt == True:
@@ -167,8 +167,8 @@ def upload_complete(upload_res, srt):
         "parts": all_res,
     } }
 
-    response = requests.post(complete_url, json=payload, headers=headers)
-    return response
+    complete_response = requests.post(complete_url, json=payload, headers=headers)
+    return complete_response
 
 # upload file
 @file_bp.route('/upload', methods=['POST'])
