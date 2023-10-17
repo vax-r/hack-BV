@@ -15,6 +15,15 @@ headers = {
     "authorization": "Bearer " + api_token,
 }
 
+def get_live_id(livestream_name):
+    url = base_url + "/bv/cms/v1/lives"
+
+    querystring = {"current_page":"1","items_per_page":"1","filter.name":str(livestream_name)}
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+    return response.json()['lives'][0]['id']
+
 # list all the livestream you have
 @livestream_bp.route('/list', methods=['GET'])
 def list():
@@ -105,27 +114,43 @@ def create():
         "message":"Create livestream successfully",
     }), 200
 
+# Preview livestream
 @livestream_bp.route('/preview', methods=['POST'])
 def preview():
 
-    if len(request.values) == 0 or any(key not in ["livestream_id"] for key in request.values):
+    if len(request.values) == 0 or any(key not in ["livestream_name"] for key in request.values):
         return jsonify({
             "code":"2",
             "message":"invalid query keyword",
         }), 400
-
-    if request.values["livestream_id"] == "":
+    
+    if request.values["livestream_name"] == "":
         return jsonify({
             "code":"3",
-            "message":"invalid livestream id",
+            "message":"invalid livestream name",
         }), 400
 
+    livestream_id = get_live_id(request.values["livestream_name"])
 
+    url = base_url + "/bv/cms/v1/lives/" + livestream_id + ":preview"
+    payload = {}
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        return jsonify({
+            "code":"4",
+            "message":"failed to preview livestream",
+        }), 400
+    
     return jsonify({
         "code":"0",
-        "message":"Preview livestream successfully",
-        "id":request.values["livestream_id"],
+        "message":"successfully previewed livestream",
     }), 200
+
+# start your livestream
+
+
+
 
 # edit your livestream
 @livestream_bp.route('/edit', methods=['POST'])

@@ -1,5 +1,5 @@
 web_addr: 0.0.0.0:4040
-authtoken: 24Y989Io1N6N0YRqV0ghovx4B66_4PesjGdRTEGZ92Z1vVJf7
+authtoken: 2WtVaLguDAhfgPgez74LBELldG3_2vJVNpfwF6QXxaGr8gEqc # replace it with your ngrok authtoken here
 version: 2
 tunnels:
   linebot:

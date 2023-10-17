@@ -31,5 +31,22 @@ func main() {
 		}
 	})
 
+	// Broadcast API to broadcast VOD info to all users
+	// Still lack of params checking and error handling
+	http.HandleFunc("/broadcast", func(w http.ResponseWriter, r *http.Request) {
+
+		r.ParseForm()
+
+		vod_name := r.Form.Get("vod_name")
+		vod_url := r.Form.Get("vod_url")
+
+		message := linebot.NewTextMessage("A brand new VOD has been uploaded!!!\n" + vod_name + "\n" + vod_url)
+
+		// Send the broadcast message to all users
+		if _, err := bot.BroadcastMessage(message).Do(); err != nil {
+			log.Fatal(err)
+		}
+	})
+
 	http.ListenAndServe(":8080", nil)
 }

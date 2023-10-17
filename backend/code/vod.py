@@ -1,9 +1,10 @@
-from flask import Blueprint, request, jsonify
+from flask import Blueprint, request, jsonify, render_template
 import requests
 import json
 import os
 import hashlib
 import base64
+import datetime
 
 from config import base_url, api_token, org_id
 import files
@@ -12,6 +13,8 @@ import files
 vod_bp = Blueprint('vod', __name__)
 
 UPLOAD_FOLDER = "/backend/code/assets"
+
+SHOWROOM_URL = "https://showroom.one-stage.kkstream.io/embed?token="
 
 headers = {
     "x-bv-org-id": org_id,
@@ -93,8 +96,112 @@ def create():
             "message_from_BV":response.json(),
         }), 400
 
+    # Notify linebot to broadcast the VOD to every users
+    url = "http://go-linebot:8080/broadcast"
+    params = {
+        "vod_name":response.json()['vod']['name'],
+        "vod_url":SHOWROOM_URL + get_rtoken(response.json()['vod']['id'])
+    }
+
+    response = requests.get(url, params=params)
+
+    if response.status_code != 200:
+        return jsonify({
+            "code":"6",
+            "message":"failed to broadcast through linebot",
+        }), 400
+
     return jsonify({
         "code":"0",
-        "message":"VOD created successfully",
-        "message_from_BV":response.json()
+        "message":"VOD created successfully"
     }), 200
+
+# There's a bug
+@vod_bp.route('/analytic', methods=['GET'])
+def analytic():
+
+    url = base_url + "/bv/analytics/v1/reports/watch-time"
+
+    querystring = {"time":datetime.datetime.now().isoformat(), "streaming_type":"REPORT_STREAMING_TYPE_UNSPECIFIED"}
+
+    response = requests.get(url, headers=headers, params=querystring)    
+
+    if response.status_code != 200:
+        return jsonify({
+            "code":"3",
+            "message":response.text,
+        }), 400
+
+    return response.json()
+
+# Get resource token of VOD
+def get_rtoken(rid):
+
+    url = base_url + "/bv/cms/v1/resources/tokens"
+
+    payload = {
+        "resource_id": rid,
+        "resource_type": "RESOURCE_TYPE_VOD",
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        return "null"
+
+    return response.json()['token']
+
+
+# List all the important info of VODs
+@vod_bp.route('/list', methods=['GET'])
+def list():
+    url = base_url + "/bv/cms/v1/vods"
+
+    querystring = {"current_page":"1","items_per_page":"10"}
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+    if response.status_code != 200:
+        return jsonify({
+            "code":"3",
+            "message":"Error when listing vods",
+        }), 400
+    
+    vods = []
+    for vod in response.json()['vods']:
+        if vod['status'] != "VOD_STATUS_SUCCEEDED":
+            continue
+        tmp = {}
+        tmp['name'] = vod['name']
+        tmp['id'] = vod['id']
+        tmp['showroom_url'] = SHOWROOM_URL + get_rtoken(vod['id'])
+        vods.append(tmp)
+
+    return jsonify({
+        "code":"0",
+        "message":"Successfully get all vods info",
+        "data":vods,
+    }), 200
+
+# VOD wall for all VODs
+@vod_bp.route('/show')
+def show():
+    url = base_url + "/bv/cms/v1/vods"
+
+    querystring = {"current_page":"1","items_per_page":"10"}
+
+    response = requests.get(url, headers=headers, params=querystring)
+
+    if response.status_code != 200:
+        return jsonify({
+            "code":"3",
+            "message":"Error when listing vods",
+        }), 400
+    
+    urls = []
+    for vod in response.json()['vods']:
+        if vod['status'] != "VOD_STATUS_SUCCEEDED":
+            continue
+        urls.append(SHOWROOM_URL + get_rtoken(vod['id']))
+
+    return render_template('vod_list.html', video_urls = urls)

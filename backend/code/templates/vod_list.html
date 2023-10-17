@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>VODs Show</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Custom CSS for colorful background */
+        body {
+            background-color:  black; /* Replace with your desired background color */
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="#">VOD upload</a>
+        <a class="navbar-brand" href="/vod/show">VOD List</a>
+        <a class="navbar-brand" href="#">Livestream</a>
+    </nav>
+
+    <div id="iframes-container">
+        {% for video_url in video_urls %}
+            {% if loop.index0 % 3 == 0 %}
+            <div class="row">
+            {% endif %}
+
+            <div class="col">
+                <iframe src="{{ video_url }}" width="400" height="300"></iframe>
+            </div>
+
+            {% if (loop.index0 + 1) % 3 == 0 or loop.last %}
+            </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</body>
+
+<script>
+    window.addEventListener('message', event => {
+      if (event.data.command === 'ping') {
+        Array.from(document.querySelectorAll('iframe')).forEach(iframe => 
+          iframe?.contentWindow?.postMessage({ command: 'pong' }, '*')
+        );
+      }
+    });
+</script>
+
+
+</html>

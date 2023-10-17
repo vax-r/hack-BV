@@ -5,3 +5,4 @@ jsonify==0.5
 request3==2.19.0
 http_client==0.1.22
 requests==2.31.0
+openai

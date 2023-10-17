@@ -114,6 +114,26 @@ def generate_subtitle(video_path):
         print(f"Error adding subtitles: {e}")
     return subtitle_video
 
+# get respone from chatgpt and create chatting video
+# @file_bp.route('/talk', methods=['GET'])
+# def gpt_talk():
+#     srt_path = request.args['srt_path']
+#     text = ""
+#     with open(srt_path, 'r', encoding='utf-8') as file:
+#         lines = file.read().splitlines()
+#         text = '\n'.join(line for line in lines if not line.isdigit())
+
+#     # Make a request to OpenAI for a response
+#     response = openai.Completion.create(
+#         engine="text-davinci-002",
+#         prompt=text,
+#         max_tokens=50,  # Adjust the number of tokens as needed
+#     )
+
+#     generated_text = response.choices[0].text
+#     return generated_text
+
+
 # This function implements the part to upload files to BV library
 def file_upload(file_path):
     upload_url = base_url + "/bv/cms/v1/library/files:upload"
