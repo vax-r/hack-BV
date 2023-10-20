@@ -1,0 +1,93 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <title>LiveStream Show</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Custom CSS for colorful background */
+        body {
+            background-color:  black; /* Replace with your desired background color */
+            color: white;
+            text-align: center;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+</head>
+<body>
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="/">VOD upload</a>
+        <a class="navbar-brand" href="/vod/show">VOD List</a>
+        <a class="navbar-brand" href="/livestream/show">Livestream Show</a>
+    </nav>
+
+    <div id="livestream-create">
+        <button type="button" class="btn btn-success btn-lg" id="createButton">Create Livestream</button>
+    </div>
+
+    <div id="livestream-list">
+        <div class="row">
+            <div class="col">Name</div>
+            <div class="col">Status</div>
+        </div>
+        {% for live in livestreams %}
+        <div class="row">
+            <div class="col">{{live.name}}</div>
+            <div class="col">
+            {% if live.status == "LIVE_STATUS_WAIT_FOR_PREVIEW" %}
+                <button type="button" class="btn btn-primary">{{live.status}}</button>
+            {% elif live.status == "LIVE_STATUS_PREVIEW" %}
+                <button type="button" class="btn btn-success" value="{{live.id}}">{{live.status}}</button>
+            {% else %}
+                <button type="button" class="btn btn-light" disabled>{{live.status}}</button>
+            {% endif %}
+            </div>
+        </div>
+
+        {% endfor %}
+    </div>
+
+</body>
+
+<script>
+    function CreateLive() {
+        var result = prompt("Livestream name:", "");
+        if (result == null) {
+            return;
+        }
+        var url = '/livestream/create?livestream_name=' + result;
+
+        fetch(url).then(response => {
+            if (response.ok) {
+                alert("Successfully created livestream");
+                return location.reload();
+            } else {
+                throw new Error('Failed to create livestream.');
+            }
+        })
+
+    }
+
+    $("button").click(function() {
+        var data = {
+            "livestream_id":$(this).val(),
+        };
+        $.ajax({
+            url: '/livestream/get_rtmp',
+            method: 'POST',
+            data: JSON.stringify(data),
+            contentType: 'application/json',
+            success: function(response) {
+                confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?");
+            },
+            error: function(error) {
+                alert("Error:" + error.message);
+            }
+        });
+    });
+
+    document.getElementById('createButton').addEventListener('click', CreateLive);
+</script>

@@ -5,6 +5,8 @@ import os
 import hashlib
 import base64
 import datetime
+import time
+import multiprocessing
 
 from config import base_url, api_token, org_id
 import files
@@ -28,6 +30,25 @@ def list_profile_set():
     querystring = {"current_page":"1","items_per_page":"1"}
 
     response = requests.get(url, headers=headers, params=querystring)
+
+    return response.json()
+
+def notify_linebot(vname, vid):
+    status_url = base_url + "/bv/cms/v1/vods/" + str(vid)
+    while True:
+        response = requests.get(status_url, headers=headers)
+        if response.json()['vod']['status'] == "VOD_STATUS_SUCCEEDED":
+            time.sleep(5)
+            break
+        time.sleep(30)
+    
+    broadcast_url = "http://go-linebot:8080/broadcast"
+    params = {
+        "vod_name":vname,
+        "vod_url":"https://showroom.one-stage.kkstream.io?token=" + get_rtoken(vid)
+    }
+
+    response = requests.get(broadcast_url, params=params)
 
     return response.json()
 
@@ -97,13 +118,10 @@ def create():
         }), 400
 
     # Notify linebot to broadcast the VOD to every users
-    url = "http://go-linebot:8080/broadcast"
-    params = {
-        "vod_name":response.json()['vod']['name'],
-        "vod_url":SHOWROOM_URL + get_rtoken(response.json()['vod']['id'])
-    }
-
-    response = requests.get(url, params=params)
+    multiprocessing.Process(target=notify_linebot, args=(
+        response.json()['vod']['name'], 
+        response.json()['vod']['id']
+    )).start()
 
     if response.status_code != 200:
         return jsonify({
@@ -184,6 +202,7 @@ def list():
     }), 200
 
 # VOD wall for all VODs
+# need pagination
 @vod_bp.route('/show')
 def show():
     url = base_url + "/bv/cms/v1/vods"
