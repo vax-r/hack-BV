@@ -130,24 +130,39 @@ def generate_subtitle(video_path):
     return subtitle_video
 
 # get respone from chatgpt and create chatting video
-def gpt_talk(srt_path):
 
+
+def gpt_talk(video_path):
+    url = "http://whisper-api:9000/asr"
+    
+    params = {"task":"transcribe", "output":"txt"}
+    video_file = open(video_path, 'rb')
+    body = {"audio_file":video_file}
+    response = requests.post(url, params=params, files=body)
+    video_file.close()
+    if response.status_code != 200:
+        return "Failed to transcribe video"
+    
+    srt_path = "/backend/code/subtitled/" + os.path.basename(video_path).rsplit(".")[0] + ".txt"
+    with open(srt_path, 'w', encoding='utf-8') as srt_file:
+        srt_file.write(response.content.decode('utf-8'))
+    
+   
     with open(srt_path, 'r', encoding='utf-8') as file:
         lines = file.read().splitlines()
         text = '\n'.join(line for line in lines if not line.isdigit())
-
+    
     # Make a request to OpenAI for a response
     response = openai.Completion.create(
-        engine="text-davinci-002",
+        engine="text-davinci-003",
         prompt=text,
         max_tokens=150,  # Adjust the number of tokens as needed
     )
-
+    
     text = response.choices[0].text
-
-    language = 'en'
+    #language = 'en'
     filepath = "/backend/code/audio/" + os.path.basename(srt_path).rsplit(".")[0] + ".mp3"
-    tts = gTTS(text=text, lang=language, slow=False)
+    tts = gTTS(text=text)
     tts.save(filepath)
 
     return filepath
@@ -236,7 +251,8 @@ def upload():
     if request.values.get('subtitle') == "1":
         file_path = generate_subtitle(file_path)
         filename = os.path.basename(file_path)
-        audiopath = gpt_talk("/backend/code/subtitled/" + file.filename.rsplit(".")[0] + ".srt")
+        audiopath = gpt_talk(os.path.join(UPLOAD_FOLDER, file.filename))
+        # audiopath = gpt_talk("/backend/code/subtitled/" + file.filename.rsplit(".")[0] + ".srt")
 
     upload_res = file_upload(file_path)
     if upload_res.status_code != 200:
