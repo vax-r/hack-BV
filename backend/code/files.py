@@ -5,11 +5,15 @@ import os
 import hashlib
 import base64
 import subprocess
+import openai
+from gtts import gTTS
 
-from config import base_url, api_token, org_id
+from config import base_url, api_token, org_id, openai_apikey
 
 # Create a Blueprint object
 file_bp = Blueprint('file', __name__)
+
+openai.api_key = openai_apikey
 
 UPLOAD_FOLDER = "/backend/code/assets"
 SRT_FOLDER = "/backend/code/subtitled"
@@ -115,23 +119,27 @@ def generate_subtitle(video_path):
     return subtitle_video
 
 # get respone from chatgpt and create chatting video
-# @file_bp.route('/talk', methods=['GET'])
-# def gpt_talk():
-#     srt_path = request.args['srt_path']
-#     text = ""
-#     with open(srt_path, 'r', encoding='utf-8') as file:
-#         lines = file.read().splitlines()
-#         text = '\n'.join(line for line in lines if not line.isdigit())
+def gpt_talk(srt_path):
 
-#     # Make a request to OpenAI for a response
-#     response = openai.Completion.create(
-#         engine="text-davinci-002",
-#         prompt=text,
-#         max_tokens=50,  # Adjust the number of tokens as needed
-#     )
+    with open(srt_path, 'r', encoding='utf-8') as file:
+        lines = file.read().splitlines()
+        text = '\n'.join(line for line in lines if not line.isdigit())
 
-#     generated_text = response.choices[0].text
-#     return generated_text
+    # Make a request to OpenAI for a response
+    response = openai.Completion.create(
+        engine="text-davinci-002",
+        prompt=text,
+        max_tokens=150,  # Adjust the number of tokens as needed
+    )
+
+    text = response.choices[0].text
+
+    language = 'en'
+    filepath = "/backend/code/audio/" + os.path.basename(srt_path).rsplit(".")[0] + ".mp3"
+    tts = gTTS(text=text, lang=language, slow=False)
+    tts.save(filepath)
+
+    return filepath
 
 
 # This function implements the part to upload files to BV library
@@ -213,9 +221,11 @@ def upload():
     filename = file.filename
     file.save(file_path) # store file in local
 
+    result = ""
     if request.values.get('subtitle') == "1":
         file_path = generate_subtitle(file_path)
         filename = os.path.basename(file_path)
+        audiopath = gpt_talk("/backend/code/subtitled/" + file.filename.rsplit(".")[0] + ".srt")
 
     upload_res = file_upload(file_path)
     if upload_res.status_code != 200:

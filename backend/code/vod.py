@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template
+from flask import Blueprint, request, jsonify, render_template, send_file
 import requests
 import json
 import os
@@ -175,7 +175,7 @@ def get_rtoken(rid):
 def list():
     url = base_url + "/bv/cms/v1/vods"
 
-    querystring = {"current_page":"1","items_per_page":"10"}
+    querystring = {"current_page":"1","items_per_page":"100"}
 
     response = requests.get(url, headers=headers, params=querystring)
 
@@ -201,13 +201,18 @@ def list():
         "data":vods,
     }), 200
 
+@vod_bp.route('/audio', methods=['GET'])
+def audio():
+    audio_name = request.args["audio_name"]
+    return send_file("audio/" + audio_name)
+
 # VOD wall for all VODs
 # need pagination
 @vod_bp.route('/show')
 def show():
     url = base_url + "/bv/cms/v1/vods"
 
-    querystring = {"current_page":"1","items_per_page":"10"}
+    querystring = {"current_page":"1","items_per_page":"100"}
 
     response = requests.get(url, headers=headers, params=querystring)
 
@@ -217,10 +222,19 @@ def show():
             "message":"Error when listing vods",
         }), 400
     
-    urls = []
+    vods = []
     for vod in response.json()['vods']:
         if vod['status'] != "VOD_STATUS_SUCCEEDED":
             continue
-        urls.append(SHOWROOM_URL + get_rtoken(vod['id']))
 
-    return render_template('vod_list.html', video_urls = urls)
+        talkback = ""
+        if os.path.isfile("/backend/code/audio/" + vod['name'].rsplit("_")[0] + ".mp3"):
+            talkback = vod['name'].rsplit("_")[0] + ".mp3"
+        
+        vods.append({
+            "url":SHOWROOM_URL + get_rtoken(vod['id']),
+            "id":vod['id'],
+            "talkback":talkback,
+        })
+
+    return render_template('vod_list.html', vods = vods)

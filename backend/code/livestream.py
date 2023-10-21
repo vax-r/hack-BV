@@ -192,14 +192,6 @@ def edit():
     # TODO : write your code below
     return "edit"
 
-# get livestream info
-# @livestream_bp.route('/get', methods=['GET'])
-# def get():
-#     liveid = "e7480c4c-6269-41db-8489-64eb18aeea9a"
-#     url = base_url + "/bv/cms/v1/lives/" + liveid
-#     response = requests.get(url, headers=headers)
-#     return response.json()
-
 # stop your livestream
 @livestream_bp.route('/stop', methods=['GET'])
 def stop():

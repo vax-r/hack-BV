@@ -6,3 +6,4 @@ request3==2.19.0
 http_client==0.1.22
 requests==2.31.0
 openai
+gTTS==2.4.0

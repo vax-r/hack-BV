@@ -23,13 +23,18 @@
     </nav>
 
     <div id="iframes-container">
-        {% for video_url in video_urls %}
+        {% for vod in vods %}
             {% if loop.index0 % 3 == 0 %}
             <div class="row">
             {% endif %}
 
             <div class="col">
-                <iframe src="{{ video_url }}" width="400" height="300"></iframe>
+                <iframe src="{{ vod.url }}" width="400" height="300"></iframe>
+                {% if vod.talkback != "" %}
+                <audio controls>
+                    <source src="/vod/audio?audio_name={{ vod.talkback }}" type="audio/mpeg">
+                </audio>
+                {% endif %}
             </div>
 
             {% if (loop.index0 + 1) % 3 == 0 or loop.last %}
