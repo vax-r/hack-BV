@@ -1,27 +1,40 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <title>LiveStream Show</title>
     <!-- Include Bootstrap CSS -->
-    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-T3c6CoIi6uLrA9TneNEoa7RxnatzjcDSCmG1MXxSR1GAsXEV/Dwwykc2MPK8M2HN" crossorigin="anonymous">
     <style>
         /* Custom CSS for colorful background */
         body {
-            background-color:  black; /* Replace with your desired background color */
-            color: white;
-            text-align: center;
+            background-color: rgba(0, 0, 0, .4);
         }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 </head>
+
 <body>
     <!-- Bootstrap Navbar -->
-    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
-        <a class="navbar-brand" href="/">VOD upload</a>
-        <a class="navbar-brand" href="/vod/show">VOD List</a>
-        <a class="navbar-brand" href="/livestream/show">Livestream Show</a>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-dark">
+        <div class="container-fluid">
+            <div class="collapse navbar-collapse" id="navbarNavDarkDropdown">
+                <ul class="navbar-nav">
+                    <a class="btn btn-dark" href="/">
+                        VOD Upload
+                    </a>
+                    <a class="btn btn-dark" href="/vod/show">
+                        VOD List
+                    </a>
+                    <a class="btn btn-dark" href="/livestream/show">
+                        Livestream
+                    </a>
+                </ul>
+            </div>
+        </div>
     </nav>
 
     <div id="livestream-create">
@@ -37,13 +50,13 @@
         <div class="row">
             <div class="col">{{live.name}}</div>
             <div class="col">
-            {% if live.status == "LIVE_STATUS_WAIT_FOR_PREVIEW" %}
+                {% if live.status == "LIVE_STATUS_WAIT_FOR_PREVIEW" %}
                 <button type="button" class="btn btn-primary">{{live.status}}</button>
-            {% elif live.status == "LIVE_STATUS_PREVIEW" %}
+                {% elif live.status == "LIVE_STATUS_PREVIEW" %}
                 <button type="button" class="btn btn-success" value="{{live.id}}">{{live.status}}</button>
-            {% else %}
+                {% else %}
                 <button type="button" class="btn btn-light" disabled>{{live.status}}</button>
-            {% endif %}
+                {% endif %}
             </div>
         </div>
 
@@ -71,19 +84,19 @@
 
     }
 
-    $("button").click(function() {
+    $("button").click(function () {
         var data = {
-            "livestream_id":$(this).val(),
+            "livestream_id": $(this).val(),
         };
         $.ajax({
             url: '/livestream/get_rtmp',
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function(response) {
+            success: function (response) {
                 confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?");
             },
-            error: function(error) {
+            error: function (error) {
                 alert("Error:" + error.message);
             }
         });
