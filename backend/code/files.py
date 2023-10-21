@@ -131,7 +131,7 @@ def generate_subtitle(video_path):
 
 # get respone from chatgpt and create chatting video
 
-@file_bp.route('/check/<video_path>', methods=['GET'])
+
 def gpt_talk(video_path):
     url = "http://whisper-api:9000/asr"
     
@@ -158,9 +158,8 @@ def gpt_talk(video_path):
         prompt=text,
         max_tokens=150,  # Adjust the number of tokens as needed
     )
-
-    #text = response.choices[0].text
-
+    
+    text = response.choices[0].text
     #language = 'en'
     filepath = "/backend/code/audio/" + os.path.basename(srt_path).rsplit(".")[0] + ".mp3"
     tts = gTTS(text=text)
@@ -252,7 +251,8 @@ def upload():
     if request.values.get('subtitle') == "1":
         file_path = generate_subtitle(file_path)
         filename = os.path.basename(file_path)
-        audiopath = gpt_talk("/backend/code/subtitled/" + file.filename.rsplit(".")[0] + ".srt")
+        audiopath = gpt_talk(os.path.join(UPLOAD_FOLDER, file.filename))
+        # audiopath = gpt_talk("/backend/code/subtitled/" + file.filename.rsplit(".")[0] + ".srt")
 
     upload_res = file_upload(file_path)
     if upload_res.status_code != 200:
