@@ -54,7 +54,9 @@
                 <button type="button" class="btn btn-primary">{{live.status}}</button>
                 {% elif live.status == "LIVE_STATUS_PREVIEW" %}
                 <button type="button" class="btn btn-success" value="{{live.id}}">{{live.status}}</button>
-                {% else %}
+            {% elif live.status == "LIVE_STATUS_LIVE" %}
+                <button type="button" class="btn btn-danger" id="{{live.id}}"><a href="/livestream/livestream_room?livestream_id={{ live.id }}">Watch</a></button>
+            {% else %}
                 <button type="button" class="btn btn-light" disabled>{{live.status}}</button>
                 {% endif %}
             </div>
@@ -81,10 +83,13 @@
                 throw new Error('Failed to create livestream.');
             }
         })
-
     }
 
-    $("button").click(function () {
+    $("button").click(function() {
+
+        if ($(this).attr('id'))
+            return;
+
         var data = {
             "livestream_id": $(this).val(),
         };
@@ -93,8 +98,11 @@
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function (response) {
-                confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?");
+            success: function(response) {
+                if (confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?")) {
+                    location.href = "/livestream/start?livestream_id=" + data["livestream_id"]
+                }
+                return;
             },
             error: function (error) {
                 alert("Error:" + error.message);

@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>LiveStream Show</title>
+    <!-- Include Bootstrap CSS -->
+    <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css">
+    <style>
+        /* Custom CSS for colorful background */
+        body {
+            background-color:  black; /* Replace with your desired background color */
+            color: white;
+            text-align: center;
+        }
+    </style>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/socket.io/4.0.1/socket.io.js" integrity="sha512-q/dWJ3kcmjBLU4Qc47E4A9kTB4m3wuTY7vkFJDTZKjTs8jhyGQnaUrxa0Ytd0ssMZhbNua9hE+E7Qv1j+DyZwA==" crossorigin="anonymous"></script>
+</head>
+
+<body>
+    <!-- Bootstrap Navbar -->
+    <nav class="navbar navbar-expand-lg navbar-dark bg-primary">
+        <a class="navbar-brand" href="/">VOD upload</a>
+        <a class="navbar-brand" href="/vod/show">VOD List</a>
+        <a class="navbar-brand" href="/livestream/show">Livestream Show</a>
+    </nav>
+
+    <iframe src="{{ url }}" width="640" height="360" allow="autoplay; encrypted-media; clipboard-write" frameborder="0" allowfullscreen></iframe>
+
+    <div>
+      <input id="input" type="text" placeholder="Type a message...">
+    </div>
+
+    <div id="chatbox"></div>
+    
+
+</body>
+
+
+</html>
+
+<script>
+    window.addEventListener('message', event => {
+      if (event.data.command === 'ping') {
+        Array.from(document.querySelectorAll('iframe')).forEach(iframe => 
+          iframe?.contentWindow?.postMessage({ command: 'pong' }, '*')
+        );
+      }
+    });
+
+    var name = prompt('請輸入用戶名：',"your name");
+
+    var socket = io();
+
+    socket.on('connect', function() {
+        socket.emit('message', {data: 'I\'m connected!'});
+    });
+
+
+    $('#input').keypress((event) => {
+      var text = $('#input').val();
+      if (event.keyCode === 13 && text !== '') {
+        $('#input').val('');
+        socket.emit('send_message', [name, text]);
+      }
+    });
+
+    socket.on('broadcast_message', (data) => {
+      appendComment(data[0], data[1]);
+    }); 
+
+    const appendComment = (text, name) => {
+        var html = `<p>【${name}】 ${text}</p>`;
+        $('#chatbox').append(html); // jquery 在現有子元素之後加入新的子元素
+        var height = $('#chatbox').prop('scrollHeight');
+        $('#chatbox').scrollTop(height);//讓使用者可以看到最新的訊息
+    }
+
+  </script>
