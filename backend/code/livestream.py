@@ -16,6 +16,8 @@ headers = {
     "authorization": "Bearer " + api_token,
 }
 
+SHOWROOM_URL = "https://showroom.one-stage.kkstream.io/embed?token="
+
 def get_live_id(livestream_name):
     url = base_url + "/bv/cms/v1/lives"
 
@@ -92,6 +94,11 @@ def create():
         "broadcast_mode": "BROADCAST_MODE_TRADITIONAL_LIVE",
         "name": request.args["livestream_name"],
         "resolution": "LIVE_RESOLUTION_HD",
+        "metadata": {
+            "short_description":"",
+            "long_description":"",
+            "labels":[],
+        },
         "security": {
         "privacy": {
             "type": "SECURITY_PRIVACY_TYPE_PUBLIC"
@@ -166,9 +173,10 @@ def get_rtmp():
     }), 200
 
 # start your livestream
-@livestream_bp.route('/start', methods=['POST'])
+@livestream_bp.route('/start', methods=['GET'])
 def start():
-    url = base_url + "/bv/cms/v1/lives/" + request.get_json["livestream_id"] + ":start"
+    # return str(request.args['livestream_id'])
+    url = base_url + "/bv/cms/v1/lives" + str(request.args['livestream_id']) + ":start"
     payload = {}
 
     response = requests.post(url, json=payload, headers=headers)
@@ -179,8 +187,6 @@ def start():
             "message":"Failed to start the livestream",
         }), response.status_code
     
-    # TODO : broadcast the livestream's showroom url
-
     return jsonify({
         "code":"0",
         "message":"Start the livestream successfully",
@@ -222,3 +228,28 @@ def show():
         livestreams.append(tmp)
 
     return render_template('livestream_list.html', livestreams = livestreams)
+
+def get_rtoken(rid):
+
+    url = base_url + "/bv/cms/v1/resources/tokens"
+
+    payload = {
+        "resource_id": rid,
+        "resource_type": "RESOURCE_TYPE_LIVE",
+    }
+
+    response = requests.post(url, json=payload, headers=headers)
+
+    if response.status_code != 200:
+        return "null"
+
+    return response.json()['token']
+
+@livestream_bp.route('/livestream_room', methods=['GET'])
+def livestream_room():
+
+    live_id = request.args['livestream_id']
+
+    url = SHOWROOM_URL + get_rtoken(live_id)
+
+    return render_template('livestream_room.html', url = url)
