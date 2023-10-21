@@ -48,13 +48,24 @@ def list():
 # search for specific file
 @file_bp.route('/search/<video_name>', methods=['GET'])
 def search(video_name):
-    
+    if video_name[-4:] != ".mp4":
+        return jsonify({
+            "code":"2",
+            "message":"invalid arguments",
+        }), 400
     list_url = base_url + "/bv/cms/v1/library/files"
     querystring = {"current_page":"1","items_per_page":"5","type":"FILE_TYPE_VIDEO","filter.name":video_name}
     
     response = requests.get(list_url, headers=headers, params=querystring)
-    
+    #return response.json()
+    if response.json()['pagination']["total_items"] ==0:
+        return jsonify({
+            "code":"4",
+            "message":"search file not found",
+        }), 400 
+
     file = response.json()["files"][0]
+    
     search_url = base_url + "/bv/cms/v1/library/files/" + file["id"]
 
     response = requests.get(search_url, headers=headers)
@@ -211,7 +222,7 @@ def upload():
     # Write your code here
 
     file = request.files['file']
-    if file.filename == '':
+    if file.filename == '' or file.filename[-4:]!=".mp4":
         return jsonify({
             "code":"3",
             "message":"No selected file",
