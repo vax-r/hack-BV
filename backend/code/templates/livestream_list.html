@@ -11,6 +11,15 @@
         body {
             background-color: rgba(0, 0, 0, .4);
         }
+
+        .navbar a {
+            float: left;
+            font-size: 16px;
+            color: white;
+            text-align: center;
+            padding: 14px 16px;
+            text-decoration: none;
+        }
     </style>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -36,34 +45,64 @@
             </div>
         </div>
     </nav>
+    <br>
+    <center>
 
-    <div id="livestream-create">
-        <button type="button" class="btn btn-success btn-lg" id="createButton">Create Livestream</button>
-    </div>
-
-    <div id="livestream-list">
-        <div class="row">
-            <div class="col">Name</div>
-            <div class="col">Status</div>
+        <div id="livestream-create">
+            <button type="button" class="btn btn-warning btn-lg" id="createButton">Create Livestream</button>
         </div>
-        {% for live in livestreams %}
-        <div class="row">
-            <div class="col">{{live.name}}</div>
-            <div class="col">
-                {% if live.status == "LIVE_STATUS_WAIT_FOR_PREVIEW" %}
-                <button type="button" class="btn btn-primary">{{live.status}}</button>
-                {% elif live.status == "LIVE_STATUS_PREVIEW" %}
-                <button type="button" class="btn btn-success" value="{{live.id}}">{{live.status}}</button>
-            {% elif live.status == "LIVE_STATUS_LIVE" %}
-                <button type="button" class="btn btn-danger" id="{{live.id}}"><a href="/livestream/livestream_room?livestream_id={{ live.id }}">Watch</a></button>
-            {% else %}
-                <button type="button" class="btn btn-light" disabled>{{live.status}}</button>
-                {% endif %}
+
+        <div class="container text-center" id="livestream-list">
+            <div class="row align-items-start">
+                <div class="col">
+                    <center>
+                        <div class="text-nowrap bg-body-secondary border"
+                            style="width: 7cm; border-radius: 16px;">
+                            <b>Name</b>
+                        </div>
+                    </center>
+                </div>
+                <div class="col">
+                    <center>
+                        <div class="text-nowrap bg-body-secondary border"
+                            style="width: 7cm; border-radius: 16px;">
+                            <b>Status</b>
+                        </div>
+                    </center>
+                </div>
             </div>
-        </div>
+            <br>
+            <br>
+            {% for live in livestreams %}
+            <div class="row">
+                <div class="col">
+                    <center>
+                        <div class="text-nowrap bg-body-secondary border" style="width: 5cm; border-radius: 16px;">
+                            {{live.name}}
+                        </div>
+                    </center>
+                </div>
+                <div class="col">
+                    {% if live.status == "LIVE_STATUS_WAIT_FOR_PREVIEW" %}
+                    <button type="button" class="btn btn-primary"
+                        style="width: 8cm; margin: 2px; border-radius: 16px;">{{live.status}}</button>
+                    {% elif live.status == "LIVE_STATUS_PREVIEW" %}
+                    <button type="button" class="btn btn-success" value="{{live.id}}"
+                        style="width: 8cm; margin: 2px; border-radius: 16px;">{{live.status}}</button>
+                    {% elif live.status == "LIVE_STATUS_LIVE" %}
+                    <button type="button" class="btn btn-danger" id="{{live.id}}"
+                        style="width: 8cm; margin: 2px; border-radius: 16px;"><a
+                            href="/livestream/livestream_room?livestream_id={{ live.id }}">Watch</a></button>
+                    {% else %}
+                    <button type="button" class="btn btn-light" style="width: 8cm; margin: 2px; border-radius: 16px;"
+                        disabled>{{live.status}}</button>
+                    {% endif %}
+                </div>
+            </div>
 
-        {% endfor %}
-    </div>
+            {% endfor %}
+        </div>
+    </center>
 
 </body>
 
@@ -85,7 +124,7 @@
         })
     }
 
-    $("button").click(function() {
+    $("button").click(function () {
 
         if ($(this).attr('id'))
             return;
@@ -98,7 +137,7 @@
             method: 'POST',
             data: JSON.stringify(data),
             contentType: 'application/json',
-            success: function(response) {
+            success: function (response) {
                 if (confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?")) {
                     location.href = "/livestream/start?livestream_id=" + data["livestream_id"]
                 }
