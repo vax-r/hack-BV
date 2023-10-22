@@ -17,7 +17,8 @@ After the website successfully uploads a video, users can receive a notification
 ### Multi-user chatroom and online AI assistant
 We also provide a multi-user chatroom and online assistant features that can be applied in educational settings.
 ![image](https://i.imgur.com/thBtScV.png)
-
+## Architecture
+![image](https://i.imgur.com/q2uNKuK.jpeg)
 ## Install
 ### requirements
 - docker
