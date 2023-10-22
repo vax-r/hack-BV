@@ -4,19 +4,19 @@ A super cool service which integrates BlendVision API and other third-party tool
 ## Features
 ### VODs Upload
 Users can upload videos through our website and choose whether or not to add subtitles.
-![](https://hackmd.io/_uploads/r1shdWGG6.png)
+![image](https://i.imgur.com/kZz4qpP.png)
 
 ### AI reaction
 After the user successfully uploads a video, our AI system will generate a corresponding response for the video.
-![](https://hackmd.io/_uploads/ryv6KZGGT.png)
+![image](https://i.imgur.com/lKFHaTg.png)
 
 ### Line Bot Notification
 After the website successfully uploads a video, users can receive a notification of the successful upload via a Line bot link.
-![](https://hackmd.io/_uploads/HJHY5bzzp.jpg)
+![image](https://i.imgur.com/UoakGyQ.jpg)
 
 ### Multi-user chatroom and online AI assistant
 We also provide a multi-user chatroom and online assistant features that can be applied in educational settings.
-![](https://hackmd.io/_uploads/rkwIiZGzT.png)
+![image](https://i.imgur.com/thBtScV.png)
 
 ## Install
 ### requirements

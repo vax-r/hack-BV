@@ -88,7 +88,10 @@
                         style="width: 8cm; margin: 2px; border-radius: 16px;">{{live.status}}</button>
                     {% elif live.status == "LIVE_STATUS_PREVIEW" %}
                     <button type="button" class="btn btn-success" value="{{live.id}}"
-                        style="width: 8cm; margin: 2px; border-radius: 16px;">{{live.status}}</button>
+                        style="width: 8cm; margin: 2px; border-radius: 16px;">START LIVE</button>
+                    {% elif live.status == "LIVE_STATUS_INITIATING" %}
+                    <button type="button" class="btn btn-info" value="{{live.id}}"
+                        style="width: 8cm; margin: 2px; border-radius: 16px;" disabled>INITIATING</button>                    
                     {% elif live.status == "LIVE_STATUS_LIVE" %}
                     <button type="button" class="btn btn-danger" id="{{live.id}}"
                         style="width: 8cm; margin: 2px; border-radius: 16px;"><a
