@@ -8,6 +8,7 @@ def basic_chat(text):
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=text,
+        temperature=0.2,
         max_tokens=150,  # Adjust the number of tokens as needed
     )
 

@@ -156,6 +156,7 @@ def gpt_talk(video_path):
     response = openai.Completion.create(
         engine="text-davinci-003",
         prompt=text,
+        temperature=0.9,
         max_tokens=150,  # Adjust the number of tokens as needed
     )
     
@@ -272,3 +273,5 @@ def upload():
 
     # create VOD for the file
     return redirect(url_for('vod.create', video_name = filename))
+
+    # return redirect(url_for('index'))

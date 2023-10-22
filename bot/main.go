@@ -48,5 +48,19 @@ func main() {
 		}
 	})
 
+	http.HandleFunc("/broadcast_live", func(w http.ResponseWriter, r *http.Request) {
+
+		r.ParseForm()
+
+		live_url := r.Form.Get("live_url")
+
+		message := linebot.NewTextMessage("A brand new Livestream has started!!!\n" + "Click the link below to watch" + "\n" + live_url)
+
+		// Send the broadcast message to all users
+		if _, err := bot.BroadcastMessage(message).Do(); err != nil {
+			log.Fatal(err)
+		}
+	})
+
 	http.ListenAndServe(":8080", nil)
 }

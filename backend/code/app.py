@@ -23,6 +23,7 @@ socketio = SocketIO(app)
 def welcome():
     return "hello, world"
 
+@app.route('/index')
 @app.route('/')
 def index():
     return render_template('index.html')

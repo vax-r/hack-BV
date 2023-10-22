@@ -140,6 +140,7 @@
             success: function (response) {
                 if (confirm('rtmp_url : ' + response.rtmp_url + '\n\nrtmp_key : ' + response.rtmp_key + "\n\nStart Livestream?")) {
                     location.href = "/livestream/start?livestream_id=" + data["livestream_id"]
+                    location.href = "/livestream/show"
                 }
                 return;
             },

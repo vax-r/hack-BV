@@ -172,11 +172,29 @@ def get_rtmp():
         "rtmp_key":rtmp_key,
     }), 200
 
+
+def notify_linebot(id):
+    status_url = base_url + "/bv/cms/v1/lives/" + str(id)
+    while True:
+        response = requests.get(status_url, headers=headers)
+        if response.json()['live']['status'] == "LIVE_STATUS_LIVE":
+            time.sleep(3)
+            break
+        time.sleep(10)
+    
+    broadcast_url = "http://go-linebot:8080/broadcast_live"
+    params = {
+        "live_url":"https://showroom.one-stage.kkstream.io?token=" + get_rtoken(id)
+    }
+
+    response = requests.get(broadcast_url, params=params)
+
+    return response.json()
+
 # start your livestream
 @livestream_bp.route('/start', methods=['GET'])
 def start():
-    # return str(request.args['livestream_id'])
-    url = base_url + "/bv/cms/v1/lives" + str(request.args['livestream_id']) + ":start"
+    url = base_url + "/bv/cms/v1/lives/" + str(request.args['livestream_id']) + ":start"
     payload = {}
 
     response = requests.post(url, json=payload, headers=headers)
@@ -186,7 +204,11 @@ def start():
             "code":"1",
             "message":"Failed to start the livestream",
         }), response.status_code
-    
+
+    multiprocessing.Process(target=notify_linebot, args=(
+        str(request.args['livestream_id']),
+    )).start()
+
     return jsonify({
         "code":"0",
         "message":"Start the livestream successfully",

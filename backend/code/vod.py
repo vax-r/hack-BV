@@ -1,4 +1,4 @@
-from flask import Blueprint, request, jsonify, render_template, send_file
+from flask import Blueprint, request, jsonify, render_template, send_file, redirect, url_for
 import requests
 import json
 import os
@@ -128,6 +128,8 @@ def create():
             "code":"6",
             "message":"failed to broadcast through linebot",
         }), 400
+
+    return redirect(url_for('index'))
 
     return jsonify({
         "code":"0",
